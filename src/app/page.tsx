@@ -1,6 +1,6 @@
 'use client';
 import dynamic from 'next/dynamic';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { analyzeLegalDocument, GeminiAnalysis } from '../components/GeminiApi';
 import HeroSection from '../components/HeroSection';
 import FeaturesSection from '../components/FeaturesSection';
@@ -8,21 +8,12 @@ import FeaturesSection from '../components/FeaturesSection';
 const FileUpload = dynamic(() => import('../components/FileUpload'), { ssr: false });
 
 export default function Home() {
-  const [extractedText, setExtractedText] = useState("");
   const [analysis, setAnalysis] = useState<GeminiAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showOptions, setShowOptions] = useState(false);
-  const [theme, setTheme] = useState<'light' | 'dark'>("light");
-  const [summaryLevel, setSummaryLevel] = useState<'brief' | 'detailed'>("brief");
-  const [language, setLanguage] = useState<'en' | 'es' | 'fr'>("en");
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [showHelp, setShowHelp] = useState(false);
-  const downloadRef = useRef<HTMLDivElement>(null);
   const uploadRef = useRef<HTMLDivElement>(null);
 
   const handleExtractedText = async (text: string) => {
-    setExtractedText(text);
     setAnalysis(null);
     setError(null); // Clear any previous errors
     setLoading(true);
@@ -168,9 +159,9 @@ ${analysis.structure.map((section, i) => `${i + 1}. ${section}`).join('\n')}`;
                     Analysis Complete
                   </span>
                 </h2>
-                <p className="text-lg text-slate-600 dark:text-slate-300">
-                  Here's what our AI found in your document
-                </p>
+                                        <p className="text-lg text-slate-600 dark:text-slate-300">
+                          Here&apos;s what our AI found in your document
+                        </p>
               </div>
 
               {/* Analysis Results */}
@@ -264,7 +255,7 @@ ${analysis.structure.map((section, i) => `${i + 1}. ${section}`).join('\n')}`;
                       </div>
                       <div>
                         <h3 className="font-semibold text-slate-900 dark:text-white">Contract Structure</h3>
-                        <p className="text-sm text-slate-600 dark:text-slate-300">How it's organized</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-300">How it&apos;s organized</p>
                       </div>
                     </div>
                   </div>
