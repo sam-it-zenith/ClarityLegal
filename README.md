@@ -120,7 +120,7 @@ The application is fully responsive and optimized for:
 Create a `.env.local` file:
 
 ```env
-GOOGLE_GEMINI_API_KEY=your_gemini_api_key_here
+NEXT_PUBLIC_GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
 ### Tailwind Configuration
@@ -159,7 +159,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## ⚠️ Disclaimer
 
-**ClarityLegal is an AI-powered explainer, not a law firm.** The information provided is for educational and informational purposes only and does not constitute legal advice. For legal advice, please consult a qualified attorney.
+**ClarityLegal is an AI-powered explainer, not a law firm.**
 
 ## 🙏 Acknowledgments
 
