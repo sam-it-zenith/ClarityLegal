@@ -6,15 +6,17 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['@tailwindcss/forms', '@tailwindcss/typography'],
   },
   
-  // Configure webpack for better Windows compatibility
+  // Configure webpack for better Windows compatibility and pdfjs-dist browser build
   webpack: (config, { isServer }) => {
-    // Handle Windows file path issues
+    config.resolve.alias = {
+      ...(config.resolve.alias || {}),
+      'pdfjs-dist$': 'pdfjs-dist/build/pdf',
+      'pdfjs-dist/legacy/build/pdf$': 'pdfjs-dist/build/pdf',
+    };
     config.watchOptions = {
       poll: 1000,
       aggregateTimeout: 300,
     };
-    
-    // Optimize for production
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -24,19 +26,12 @@ const nextConfig: NextConfig = {
         canvas: false, // Disable canvas for browser environment
       };
     }
-    
     return config;
   },
-  
-  // Disable image optimization for better performance
   images: {
     unoptimized: true,
   },
-  
-  // Output configuration
   output: 'standalone',
-  
-  // Disable ESLint during builds for deployment
   eslint: {
     ignoreDuringBuilds: true,
   },

@@ -20,12 +20,9 @@ function aiErrorMessage(fileName: string) {
 
 async function extractTextFromFile(file: File): Promise<string> {
   if (file.type === "application/pdf") {
-    // Use dynamic import for browser-compatible PDF processing
-    const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf");
-    
-    // Set worker source for browser environment
+    // Use browser-compatible PDF.js build
+    const pdfjsLib = await import("pdfjs-dist/build/pdf");
     (pdfjsLib as any).GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${(pdfjsLib as any).version}/pdf.worker.min.js`;
-    
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await (pdfjsLib as any).getDocument({ data: arrayBuffer }).promise;
     let text = "";
