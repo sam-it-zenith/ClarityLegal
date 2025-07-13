@@ -18,11 +18,17 @@ function aiErrorMessage(fileName: string) {
   return `🚫 Oops! "${fileName}" is not a supported document type. Please upload a PDF, DOCX, or TXT file so I can help you understand it!`;
 }
 
-async function extractTextFromFile(file: File): Promise<string> {
-  if (file.type === "application/pdf") {
-    // Use browser-compatible PDF.js build
+// Safe PDF processing function with proper error handling
+async function processPDF(file: File): Promise<string> {
+  try {
+    // Dynamic import with error handling
     const pdfjsLib = await import("pdfjs-dist/build/pdf");
-    (pdfjsLib as any).GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${(pdfjsLib as any).version}/pdf.worker.min.js`;
+    
+    // Set the worker source for browser environment
+    if (typeof window !== 'undefined') {
+      (pdfjsLib as any).GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${(pdfjsLib as any).version}/pdf.worker.min.js`;
+    }
+    
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await (pdfjsLib as any).getDocument({ data: arrayBuffer }).promise;
     let text = "";
@@ -32,6 +38,15 @@ async function extractTextFromFile(file: File): Promise<string> {
       text += content.items.map((item: { str: string }) => item.str).join(" ") + "\n";
     }
     return text;
+  } catch (error) {
+    console.error('PDF processing error:', error);
+    throw new Error("😕 Sorry, I couldn't process this PDF file. Please make sure it's not password-protected and try again.");
+  }
+}
+
+async function extractTextFromFile(file: File): Promise<string> {
+  if (file.type === "application/pdf") {
+    return await processPDF(file);
   } else if (
     file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
     file.name.endsWith(".docx")
