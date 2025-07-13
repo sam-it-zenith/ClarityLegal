@@ -1,5 +1,5 @@
 'use client';
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 
 // Utility to dynamically load the mammoth.browser.js script from CDN
 function loadMammothBrowser(): Promise<any> {
@@ -21,8 +21,8 @@ function aiErrorMessage(fileName: string) {
 // Safe PDF processing function with proper error handling
 async function processPDF(file: File): Promise<string> {
   try {
-    // Dynamic import with error handling
-    const pdfjsLib = await import("pdfjs-dist/build/pdf");
+    // Dynamic import with error handling for browser compatibility
+    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf');
     
     // Set the worker source for browser environment
     if (typeof window !== 'undefined') {
@@ -51,6 +51,10 @@ async function processPDF(file: File): Promise<string> {
     return text;
   } catch (error) {
     console.error('PDF processing error:', error);
+    // Check if it's a canvas module error
+    if (error instanceof Error && error.message.includes('canvas')) {
+      throw new Error("😕 PDF processing failed due to browser compatibility issues. Please try a different browser or file format.");
+    }
     throw new Error("😕 Sorry, I couldn't process this PDF file. Please make sure it's not password-protected and try again.");
   }
 }
@@ -83,9 +87,17 @@ const FileUpload: React.FC<FileUploadProps> = ({ onExtractedText, onError }) => 
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Ensure component only runs on client side
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const handleFiles = async (files: FileList | null) => {
+    if (!isClient) return; // Only process on client side
+    
     setError(null);
     onError?.(null); // Clear parent error state
     setPreview("");
@@ -121,6 +133,11 @@ const FileUpload: React.FC<FileUploadProps> = ({ onExtractedText, onError }) => 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     handleFiles(e.target.files);
   };
+
+  // Don't render anything until client-side
+  if (!isClient) {
+    return null;
+  }
 
   return (
     <div className="w-full flex flex-col items-center">

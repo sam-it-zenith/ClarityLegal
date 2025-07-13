@@ -11,8 +11,8 @@ const nextConfig: NextConfig = {
     // Ensure we use the browser-compatible build of pdfjs-dist
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
-      'pdfjs-dist$': 'pdfjs-dist/build/pdf',
-      'pdfjs-dist/legacy/build/pdf$': 'pdfjs-dist/build/pdf',
+      'pdfjs-dist$': 'pdfjs-dist/legacy/build/pdf',
+      'pdfjs-dist/legacy/build/pdf$': 'pdfjs-dist/legacy/build/pdf',
     };
     
     config.watchOptions = {
@@ -23,18 +23,19 @@ const nextConfig: NextConfig = {
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
+        // Essential Node.js modules that pdfjs-dist might try to import
         canvas: false,
-        // Add more Node.js modules that might be imported
+        fs: false,
+        path: false,
+        os: false,
         crypto: false,
         stream: false,
         util: false,
         buffer: false,
         process: false,
-        path: false,
-        os: false,
+        // Additional modules that might cause issues
+        net: false,
+        tls: false,
         url: false,
         querystring: false,
         zlib: false,
