@@ -1,5 +1,5 @@
 'use client';
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
 
 // Utility to dynamically load the mammoth.browser.js script from CDN
 function loadMammothBrowser(): Promise<any> {
@@ -18,61 +18,50 @@ function aiErrorMessage(fileName: string) {
   return `🚫 Oops! "${fileName}" is not a supported document type. Please upload a PDF, DOCX, or TXT file so I can help you understand it!`;
 }
 
-// Safe PDF processing function with proper error handling
-async function processPDF(file: File): Promise<string> {
-  try {
-    // Dynamic import with error handling for browser compatibility
-    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf');
-    
-    // Set the worker source for browser environment
-    if (typeof window !== 'undefined') {
-      // Use CDN worker to avoid bundling issues
-      (pdfjsLib as any).GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${(pdfjsLib as any).version}/pdf.worker.min.js`;
+async function extractTextFromFile(file: File): Promise<string> {
+  const fileName = file.name.toLowerCase();
+
+  if (file.type === "application/pdf" || fileName.endsWith(".pdf")) {
+    if (typeof window === "undefined") {
+      throw new Error("PDF parsing is only available in the browser.");
     }
-    
+
+    const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf");
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.js`;
+
     const arrayBuffer = await file.arrayBuffer();
-    const pdf = await (pdfjsLib as any).getDocument({ 
-      data: arrayBuffer,
-      // Disable worker to avoid canvas module issues
-      disableWorker: true,
-      // Use range chunk loading for better performance
-      rangeChunkSize: 65536,
-      // Disable auto fetch to avoid Node.js dependencies
-      disableAutoFetch: true,
-      disableStream: true
-    }).promise;
-    
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     let text = "";
+
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
       const content = await page.getTextContent();
-      text += content.items.map((item: { str: string }) => item.str).join(" ") + "\n";
+      text += content.items.map((item: any) => item.str).join(" ") + "\n";
     }
-    return text;
-  } catch (error) {
-    console.error('PDF processing error:', error);
-    // Check if it's a canvas module error
-    if (error instanceof Error && error.message.includes('canvas')) {
-      throw new Error("😕 PDF processing failed due to browser compatibility issues. Please try a different browser or file format.");
-    }
-    throw new Error("😕 Sorry, I couldn't process this PDF file. Please make sure it's not password-protected and try again.");
-  }
-}
 
-async function extractTextFromFile(file: File): Promise<string> {
-  if (file.type === "application/pdf") {
-    return await processPDF(file);
-  } else if (
+    return text;
+  }
+
+  else if (
     file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-    file.name.endsWith(".docx")
+    fileName.endsWith(".docx")
   ) {
     const mammoth = await loadMammothBrowser();
+    if (!mammoth || typeof mammoth.convertToHtml !== "function") {
+      throw new Error("Mammoth.js failed to load.");
+    }
+
     const arrayBuffer = await file.arrayBuffer();
     const { value } = await mammoth.convertToHtml({ arrayBuffer });
     return value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-  } else if (file.type === "text/plain" || file.name.endsWith(".txt")) {
+  }
+
+  else if (file.type === "text/plain" || fileName.endsWith(".txt")) {
     return await file.text();
-  } else {
+  }
+
+  else {
     throw new Error(aiErrorMessage(file.name));
   }
 }
@@ -87,17 +76,9 @@ const FileUpload: React.FC<FileUploadProps> = ({ onExtractedText, onError }) => 
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isClient, setIsClient] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Ensure component only runs on client side
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
   const handleFiles = async (files: FileList | null) => {
-    if (!isClient) return; // Only process on client side
-    
     setError(null);
     onError?.(null); // Clear parent error state
     setPreview("");
@@ -133,11 +114,6 @@ const FileUpload: React.FC<FileUploadProps> = ({ onExtractedText, onError }) => 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     handleFiles(e.target.files);
   };
-
-  // Don't render anything until client-side
-  if (!isClient) {
-    return null;
-  }
 
   return (
     <div className="w-full flex flex-col items-center">

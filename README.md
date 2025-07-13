@@ -159,7 +159,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## ⚠️ Disclaimer
 
-**ClarityLegal is an AI-powered explainer, not a law firm.**
+**ClarityLegal is an AI-powered explainer, not a law firm.** The information provided is for educational and informational purposes only and does not constitute legal advice. For legal advice, please consult a qualified attorney.
 
 ## 🙏 Acknowledgments
 
