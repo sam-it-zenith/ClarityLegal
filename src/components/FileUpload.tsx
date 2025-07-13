@@ -26,11 +26,22 @@ async function processPDF(file: File): Promise<string> {
     
     // Set the worker source for browser environment
     if (typeof window !== 'undefined') {
+      // Use CDN worker to avoid bundling issues
       (pdfjsLib as any).GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${(pdfjsLib as any).version}/pdf.worker.min.js`;
     }
     
     const arrayBuffer = await file.arrayBuffer();
-    const pdf = await (pdfjsLib as any).getDocument({ data: arrayBuffer }).promise;
+    const pdf = await (pdfjsLib as any).getDocument({ 
+      data: arrayBuffer,
+      // Disable worker to avoid canvas module issues
+      disableWorker: true,
+      // Use range chunk loading for better performance
+      rangeChunkSize: 65536,
+      // Disable auto fetch to avoid Node.js dependencies
+      disableAutoFetch: true,
+      disableStream: true
+    }).promise;
+    
     let text = "";
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
